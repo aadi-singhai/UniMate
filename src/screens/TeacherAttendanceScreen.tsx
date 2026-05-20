@@ -45,7 +45,8 @@ export function TeacherAttendanceScreen({ onBack }: TeacherAttendanceScreenProps
 
   const handleMarkAll = (status: 'present' | 'absent') => {
     const newAttendance: { [key: number]: 'present' | 'absent' } = {};
-    filteredStudents.forEach((student) => {
+    // Changes from filteredStudents to studentsList
+    studentsList.forEach((student) => {
       newAttendance[student.id] = status;
     });
     setAttendance(newAttendance);
@@ -61,9 +62,10 @@ export function TeacherAttendanceScreen({ onBack }: TeacherAttendanceScreenProps
       student.rollNo.includes(searchQuery)
   );
 
+  // Change filteredStudents.length to studentsList.length
   const presentCount = Object.values(attendance).filter((status) => status === 'present').length;
   const absentCount = Object.values(attendance).filter((status) => status === 'absent').length;
-  const unmarkedCount = filteredStudents.length - presentCount - absentCount;
+  const unmarkedCount = studentsList.length - presentCount - absentCount;
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -272,21 +274,19 @@ export function TeacherAttendanceScreen({ onBack }: TeacherAttendanceScreenProps
                     <div className="flex gap-2">
                       <button
                         onClick={() => handleMarkAttendance(student.id, 'present')}
-                        className={`p-2 rounded-xl transition-all ${
-                          attendance[student.id] === 'present'
-                            ? 'bg-accent text-white scale-110'
-                            : 'bg-accent/10 text-accent hover:bg-accent/20'
-                        }`}
+                        className={`p-2 rounded-xl transition-all ${attendance[student.id] === 'present'
+                          ? 'bg-accent text-white scale-110'
+                          : 'bg-accent/10 text-accent hover:bg-accent/20'
+                          }`}
                       >
                         <CheckCircle2 className="w-5 h-5" />
                       </button>
                       <button
                         onClick={() => handleMarkAttendance(student.id, 'absent')}
-                        className={`p-2 rounded-xl transition-all ${
-                          attendance[student.id] === 'absent'
-                            ? 'bg-destructive text-white scale-110'
-                            : 'bg-destructive/10 text-destructive hover:bg-destructive/20'
-                        }`}
+                        className={`p-2 rounded-xl transition-all ${attendance[student.id] === 'absent'
+                          ? 'bg-destructive text-white scale-110'
+                          : 'bg-destructive/10 text-destructive hover:bg-destructive/20'
+                          }`}
                       >
                         <XCircle className="w-5 h-5" />
                       </button>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowLeft, Plus, MessageSquare, Clock, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Plus, MessageSquare, Clock } from 'lucide-react';
 import { GlassCard } from '../components/GlassCard';
 import { StatusChip } from '../components/StatusChip';
 import { Button } from '../components/ui/button';
@@ -13,7 +13,7 @@ interface ComplaintScreenProps {
   userRole: 'student' | 'teacher' | 'admin';
 }
 
-const sampleComplaints = [
+const INITIAL_COMPLAINTS = [
   {
     id: 1,
     title: 'Broken AC in Lab 301',
@@ -53,8 +53,58 @@ const sampleComplaints = [
 ];
 
 export function ComplaintScreen({ onBack, userRole }: ComplaintScreenProps) {
+  const [complaints, setComplaints] = useState(INITIAL_COMPLAINTS);
   const [showSubmitForm, setShowSubmitForm] = useState(false);
-  const [selectedComplaint, setSelectedComplaint] = useState<typeof sampleComplaints[0] | null>(null);
+  const [selectedComplaint, setSelectedComplaint] = useState<typeof INITIAL_COMPLAINTS[0] | null>(null);
+
+  // Form Submission State
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState('');
+  const [description, setDescription] = useState('');
+
+  // Admin Action State
+  const [adminStatus, setAdminStatus] = useState<'pending' | 'in-review' | 'resolved'>('pending');
+
+  // Handle Dynamic Counts
+  const pendingCount = complaints.filter((c) => c.status === 'pending').length;
+  const inReviewCount = complaints.filter((c) => c.status === 'in-review').length;
+  const resolvedCount = complaints.filter((c) => c.status === 'resolved').length;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !category || !description) return;
+
+    const newComplaint = {
+      id: Date.now(),
+      title,
+      category: category.charAt(0).toUpperCase() + category.slice(1),
+      description,
+      status: 'pending' as const,
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      submittedBy: 'Current User',
+    };
+
+    setComplaints([newComplaint, ...complaints]);
+    setShowSubmitForm(false);
+
+    // Reset fields
+    setTitle('');
+    setCategory('');
+    setDescription('');
+  };
+
+  const handleUpdateStatus = () => {
+    if (!selectedComplaint) return;
+
+    setComplaints(prev =>
+      prev.map(item =>
+        item.id === selectedComplaint.id ? { ...item, status: adminStatus } : item
+      )
+    );
+
+    // Sync selected item card context view text modifications
+    setSelectedComplaint(prev => prev ? { ...prev, status: adminStatus } : null);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -73,21 +123,23 @@ export function ComplaintScreen({ onBack, userRole }: ComplaintScreenProps) {
                 }
               }}
               className="p-2 hover:bg-secondary/50 rounded-full transition-colors"
+              aria-label="Back"
             >
               <ArrowLeft className="w-6 h-6" />
             </button>
-            <h2 className="text-2xl">
+            <h1 className="text-2xl font-semibold tracking-tight">
               {selectedComplaint
                 ? 'Complaint Details'
                 : showSubmitForm
-                ? 'Submit Complaint'
-                : 'Complaints'}
-            </h2>
+                  ? 'Submit Complaint'
+                  : 'Complaints'}
+            </h1>
           </div>
           {!selectedComplaint && !showSubmitForm && userRole !== 'admin' && (
             <button
               onClick={() => setShowSubmitForm(true)}
-              className="p-2 bg-primary text-primary-foreground rounded-full hover:scale-110 transition-transform"
+              className="p-2 bg-primary text-primary-foreground rounded-full hover:scale-110 transition-transform shadow-sm"
+              aria-label="File new complaint"
             >
               <Plus className="w-6 h-6" />
             </button>
@@ -101,26 +153,31 @@ export function ComplaintScreen({ onBack, userRole }: ComplaintScreenProps) {
             /* Submit Form */
             <motion.div
               key="submit-form"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="space-y-4"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
             >
-              <div className="bg-card border border-border rounded-3xl p-6 space-y-4">
+              <form onSubmit={handleSubmit} className="bg-card border border-border rounded-3xl p-6 space-y-4">
                 <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Complaint Title</label>
-                  <Input placeholder="Brief title of your complaint" className="h-12 rounded-2xl" />
+                  <label className="text-sm font-medium text-muted-foreground mb-2 block">Complaint Title</label>
+                  <Input
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Brief title of your complaint"
+                    className="h-12 rounded-2xl"
+                    required
+                  />
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Category</label>
-                  <Select>
+                  <label className="text-sm font-medium text-muted-foreground mb-2 block">Category</label>
+                  <Select value={category} onValueChange={setCategory} required>
                     <SelectTrigger className="h-12 rounded-2xl">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="infrastructure">Infrastructure</SelectItem>
                       <SelectItem value="network">Network</SelectItem>
-                      <SelectItem value="food">Food Services</SelectItem>
+                      <SelectItem value="food services">Food Services</SelectItem>
                       <SelectItem value="parking">Parking</SelectItem>
                       <SelectItem value="academic">Academic</SelectItem>
                       <SelectItem value="other">Other</SelectItem>
@@ -128,66 +185,73 @@ export function ComplaintScreen({ onBack, userRole }: ComplaintScreenProps) {
                   </Select>
                 </div>
                 <div>
-                  <label className="text-sm text-muted-foreground mb-2 block">Description</label>
+                  <label className="text-sm font-medium text-muted-foreground mb-2 block">Description</label>
                   <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     placeholder="Describe your complaint in detail"
                     className="rounded-2xl min-h-[120px]"
+                    required
                   />
                 </div>
                 <div className="flex gap-3 pt-2">
                   <Button
+                    type="button"
                     onClick={() => setShowSubmitForm(false)}
                     variant="outline"
-                    className="flex-1 rounded-2xl"
+                    className="flex-1 rounded-2xl h-12"
                   >
                     Cancel
                   </Button>
-                  <Button className="flex-1 rounded-2xl">Submit Complaint</Button>
+                  <Button type="submit" className="flex-1 rounded-2xl h-12">Submit Complaint</Button>
                 </div>
-              </div>
+              </form>
             </motion.div>
           ) : selectedComplaint ? (
             /* Complaint Detail */
             <motion.div
               key="complaint-detail"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
               className="space-y-6"
             >
-              <div className="bg-card border border-border rounded-3xl p-6 space-y-4">
+              <div className="bg-card border border-border rounded-3xl p-6 space-y-4 shadow-sm">
                 <div className="flex items-start justify-between gap-4">
-                  <h3>{selectedComplaint.title}</h3>
+                  <h2 className="text-xl font-bold tracking-tight text-card-foreground">{selectedComplaint.title}</h2>
                   <StatusChip status={selectedComplaint.status} />
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <div className="flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4" />
+                    <MessageSquare className="w-4 h-4 text-primary" />
                     <span>{selectedComplaint.category}</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
+                    <Clock className="w-4 h-4 text-primary" />
                     <span>{selectedComplaint.date}</span>
                   </div>
                 </div>
 
                 <div className="pt-4 border-t border-border">
-                  <h4 className="mb-2">Description</h4>
-                  <p className="text-muted-foreground leading-relaxed">{selectedComplaint.description}</p>
+                  <h3 className="font-semibold text-sm mb-2">Description</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{selectedComplaint.description}</p>
                 </div>
 
                 {userRole !== 'admin' && (
                   <div className="pt-4 border-t border-border">
-                    <h4 className="mb-2">Submitted By</h4>
-                    <p className="text-muted-foreground">{selectedComplaint.submittedBy}</p>
+                    <h3 className="font-semibold text-sm mb-1">Submitted By</h3>
+                    <p className="text-sm text-muted-foreground">{selectedComplaint.submittedBy}</p>
                   </div>
                 )}
 
                 {userRole === 'admin' && (
                   <div className="pt-4 border-t border-border space-y-3">
-                    <h4>Admin Actions</h4>
-                    <Select>
+                    <h3 className="font-semibold text-sm text-card-foreground">Admin Actions</h3>
+                    <Select
+                      value={adminStatus}
+                      onValueChange={(value: 'pending' | 'in-review' | 'resolved') => setAdminStatus(value)}
+                    >
                       <SelectTrigger className="h-12 rounded-2xl">
                         <SelectValue placeholder="Update status" />
                       </SelectTrigger>
@@ -197,7 +261,9 @@ export function ComplaintScreen({ onBack, userRole }: ComplaintScreenProps) {
                         <SelectItem value="resolved">Resolved</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button className="w-full rounded-2xl">Update Status</Button>
+                    <Button onClick={handleUpdateStatus} className="w-full h-12 rounded-2xl">
+                      Update Status
+                    </Button>
                   </div>
                 )}
               </div>
@@ -211,50 +277,49 @@ export function ComplaintScreen({ onBack, userRole }: ComplaintScreenProps) {
               exit={{ opacity: 0 }}
               className="space-y-6"
             >
-              {/* Filter Stats */}
+              {/* Filter Stats Display */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-card border border-border rounded-2xl p-3 text-center">
-                  <p className="text-2xl mb-1">
-                    {sampleComplaints.filter((c) => c.status === 'pending').length}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Pending</p>
+                <div className="bg-card border border-border rounded-2xl p-3 text-center shadow-sm">
+                  <p className="text-2xl font-bold mb-0.5 text-card-foreground">{pendingCount}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase">Pending</p>
                 </div>
-                <div className="bg-card border border-border rounded-2xl p-3 text-center">
-                  <p className="text-2xl mb-1">
-                    {sampleComplaints.filter((c) => c.status === 'in-review').length}
-                  </p>
-                  <p className="text-xs text-muted-foreground">In Review</p>
+                <div className="bg-card border border-border rounded-2xl p-3 text-center shadow-sm">
+                  <p className="text-2xl font-bold mb-0.5 text-card-foreground">{inReviewCount}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase">In Review</p>
                 </div>
-                <div className="bg-card border border-border rounded-2xl p-3 text-center">
-                  <p className="text-2xl mb-1">
-                    {sampleComplaints.filter((c) => c.status === 'resolved').length}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Resolved</p>
+                <div className="bg-card border border-border rounded-2xl p-3 text-center shadow-sm">
+                  <p className="text-2xl font-bold mb-0.5 text-card-foreground">{resolvedCount}</p>
+                  <p className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase">Resolved</p>
                 </div>
               </div>
 
-              {/* Complaints */}
+              {/* Complaints Track List */}
               <div className="space-y-3">
-                {sampleComplaints.map((complaint, index) => (
+                {complaints.map((complaint, index) => (
                   <motion.button
                     key={complaint.id}
-                    initial={{ x: -20, opacity: 0 }}
+                    initial={{ x: -15, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: index * 0.05 }}
-                    onClick={() => setSelectedComplaint(complaint)}
-                    className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:scale-[1.02] transition-transform"
+                    transition={{ delay: index * 0.04 }}
+                    onClick={() => {
+                      setSelectedComplaint(complaint);
+                      setAdminStatus(complaint.status); // Pre-sync values for optional processing
+                    }}
+                    className="w-full bg-card border border-border rounded-2xl p-4 text-left hover:scale-[1.01] active:scale-[0.99] transition-all block shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <h4 className="flex-1">{complaint.title}</h4>
+                    <div className="flex items-start justify-between gap-3 mb-2.5">
+                      <span className="flex-1 font-semibold text-base tracking-tight text-card-foreground">
+                        {complaint.title}
+                      </span>
                       <StatusChip status={complaint.status} />
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
                       <div className="flex items-center gap-1.5">
-                        <MessageSquare className="w-4 h-4" />
+                        <MessageSquare className="w-3.5 h-3.5 text-primary" />
                         <span>{complaint.category}</span>
                       </div>
                       <div className="flex items-center gap-1.5">
-                        <Clock className="w-4 h-4" />
+                        <Clock className="w-3.5 h-3.5 text-primary" />
                         <span>{complaint.date}</span>
                       </div>
                     </div>

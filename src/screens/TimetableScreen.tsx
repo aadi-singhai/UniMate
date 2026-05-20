@@ -39,11 +39,20 @@ const timetableData = {
 
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
+// Helper function to convert "HH:MM" string to absolute minutes from midnight
+const timeToMinutes = (timeStr: string) => {
+  const [hours, minutes] = timeStr.trim().split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
 export function TimetableScreen({ onBack }: TimetableScreenProps) {
   const [selectedDay, setSelectedDay] = useState('Monday');
+
   const currentTime = new Date();
   const currentDay = days[currentTime.getDay() - 1] || 'Monday';
-  const currentHour = currentTime.getHours();
+
+  // Get current time in minutes from midnight
+  const currentMinutes = currentTime.getHours() * 60 + currentTime.getMinutes();
 
   return (
     <div className="min-h-screen bg-background pb-28">
@@ -68,11 +77,10 @@ export function TimetableScreen({ onBack }: TimetableScreenProps) {
             <button
               key={day}
               onClick={() => setSelectedDay(day)}
-              className={`px-6 py-3 rounded-2xl whitespace-nowrap transition-all ${
-                selectedDay === day
-                  ? 'bg-primary text-primary-foreground scale-105'
-                  : 'bg-card border border-border text-muted-foreground hover:border-primary'
-              }`}
+              className={`px-6 py-3 rounded-2xl whitespace-nowrap transition-all ${selectedDay === day
+                ? 'bg-primary text-primary-foreground scale-105'
+                : 'bg-card border border-border text-muted-foreground hover:border-primary'
+                }`}
             >
               {day}
             </button>
@@ -87,10 +95,16 @@ export function TimetableScreen({ onBack }: TimetableScreenProps) {
           className="space-y-4"
         >
           {timetableData[selectedDay as keyof typeof timetableData].map((cls, index) => {
+            // Split "09:00 - 10:00" into start and end strings
+            const [startTimeStr, endTimeStr] = cls.time.split(' - ');
+
+            const startMinutes = timeToMinutes(startTimeStr);
+            const endMinutes = timeToMinutes(endTimeStr);
+
             const isCurrentClass =
               selectedDay === currentDay &&
-              currentHour >= parseInt(cls.time.split(':')[0]) &&
-              currentHour < parseInt(cls.time.split(' - ')[1].split(':')[0]);
+              currentMinutes >= startMinutes &&
+              currentMinutes < endMinutes;
 
             return (
               <motion.div
@@ -98,9 +112,8 @@ export function TimetableScreen({ onBack }: TimetableScreenProps) {
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.1 + index * 0.05 }}
-                className={`bg-card border rounded-3xl p-5 flex gap-4 ${
-                  isCurrentClass ? 'border-primary shadow-lg shadow-primary/20 scale-[1.02]' : 'border-border'
-                } transition-all`}
+                className={`bg-card border rounded-3xl p-5 flex gap-4 ${isCurrentClass ? 'border-primary shadow-lg shadow-primary/20 scale-[1.02]' : 'border-border'
+                  } transition-all`}
               >
                 <div className="w-1.5 rounded-full" style={{ backgroundColor: cls.color }}></div>
                 <div className="flex-1">
@@ -110,7 +123,7 @@ export function TimetableScreen({ onBack }: TimetableScreenProps) {
                       <p className="text-sm text-muted-foreground">{cls.teacher}</p>
                     </div>
                     {isCurrentClass && (
-                      <span className="bg-accent text-white text-xs px-3 py-1 rounded-full">
+                      <span className="bg-accent text-white text-xs px-3 py-1 rounded-full animate-pulse">
                         Now
                       </span>
                     )}

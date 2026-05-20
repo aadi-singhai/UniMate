@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
@@ -8,13 +8,10 @@ import {
   MessageSquare,
   BarChart3,
   Settings,
-  Menu,
-  X,
-  TrendingUp,
+  ArrowLeft,
   CheckCircle2,
   AlertCircle,
 } from 'lucide-react';
-import { GlassCard } from '../components/GlassCard';
 import { StatusChip } from '../components/StatusChip';
 import { Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from 'recharts';
 
@@ -23,7 +20,6 @@ interface AdminDashboardScreenProps {
 }
 
 export function AdminDashboardScreen({ onBack }: AdminDashboardScreenProps) {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
   const menuItems = [
@@ -58,124 +54,117 @@ export function AdminDashboardScreen({ onBack }: AdminDashboardScreenProps) {
   ];
 
   return (
-    <div className="min-h-screen bg-background pb-28">
-      {/* Sidebar Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <motion.div
-        initial={false}
-        animate={{ x: sidebarOpen ? 0 : -300 }}
-        transition={{ type: 'spring', damping: 20 }}
-        className="fixed left-0 top-0 h-full w-64 bg-card border-r border-border z-50 p-6"
-      >
-        <div className="flex items-center justify-between mb-8">
-          <h3>Admin Panel</h3>
-          <button onClick={() => setSidebarOpen(false)}>
-            <X className="w-6 h-6" />
+    <div className="space-y-6 w-full max-w-[1400px] mx-auto p-1">
+      {/* Top Controls Action Header */}
+      <div className="flex items-center justify-between bg-card/40 border border-border/60 p-6 rounded-xl backdrop-blur-sm">
+        <div className="flex items-center gap-4">
+          <button onClick={onBack} className="p-2 hover:bg-secondary/80 rounded-lg transition-colors border border-border/40">
+            <ArrowLeft className="w-5 h-5" />
           </button>
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">Admin Dashboard</h2>
+            <div className="flex items-center gap-2 mt-0.5 text-sm text-muted-foreground">
+              <span>Internal Administration</span>
+              <span>•</span>
+              <span className="text-primary font-medium">{menuItems.find((m) => m.id === activeTab)?.label}</span>
+            </div>
+          </div>
         </div>
-        <nav className="space-y-2">
-          {menuItems.map((item) => {
+
+        {/* Tab Switcher Toolbar Ribbon */}
+        <div className="hidden xl:flex items-center gap-1.5 bg-muted/40 border border-border/60 p-1 rounded-xl">
+          {menuItems.slice(0, 5).map((item) => {
             const Icon = item.icon;
             return (
               <button
                 key={item.id}
-                onClick={() => {
-                  setActiveTab(item.id);
-                  setSidebarOpen(false);
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${
-                  activeTab === item.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-secondary'
-                }`}
+                onClick={() => setActiveTab(item.id)}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${activeTab === item.id
+                    ? 'bg-card text-foreground border border-border shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                  }`}
               >
-                <Icon className="w-5 h-5" />
-                <span>{item.label}</span>
+                <Icon className="w-3.5 h-3.5" />
+                {item.label}
               </button>
             );
           })}
-        </nav>
-      </motion.div>
-
-      {/* Header */}
-      <GlassCard className="p-6 rounded-b-3xl mb-6">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 hover:bg-secondary/50 rounded-full transition-colors"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <div className="flex-1">
-            <h2 className="text-2xl">Admin Dashboard</h2>
-            <p className="text-sm text-muted-foreground">{menuItems.find((m) => m.id === activeTab)?.label}</p>
-          </div>
         </div>
-      </GlassCard>
+      </div>
 
-      <div className="px-6 space-y-6">
-        {activeTab === 'overview' && (
-          <>
-            {/* Stats Cards */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="grid grid-cols-2 gap-4"
-            >
-              <div className="bg-card border border-border rounded-2xl p-4">
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center mb-3">
-                  <Users className="w-5 h-5 text-primary" />
-                </div>
-                <p className="text-2xl mb-1">1,440</p>
-                <p className="text-xs text-muted-foreground">Total Students</p>
+      {activeTab === 'overview' && (
+        <div className="space-y-6">
+          {/* Expanded 4-Column High Density Metric Matrix */}
+          <motion.div
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          >
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Users className="w-6 h-6 text-primary" />
               </div>
-              <div className="bg-card border border-border rounded-2xl p-4">
-                <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center mb-3">
-                  <CheckCircle2 className="w-5 h-5 text-accent" />
-                </div>
-                <p className="text-2xl mb-1">75%</p>
-                <p className="text-xs text-muted-foreground">Avg Attendance</p>
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-1">Total Matriculated</p>
+                <p className="text-2xl font-bold tracking-tight">1,440</p>
               </div>
-              <div className="bg-card border border-border rounded-2xl p-4">
-                <div className="w-10 h-10 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center mb-3">
-                  <FileText className="w-5 h-5 text-[#F59E0B]" />
-                </div>
-                <p className="text-2xl mb-1">24</p>
-                <p className="text-xs text-muted-foreground">Active Events</p>
-              </div>
-              <div className="bg-card border border-border rounded-2xl p-4">
-                <div className="w-10 h-10 rounded-xl bg-[#EF4444]/10 flex items-center justify-center mb-3">
-                  <AlertCircle className="w-5 h-5 text-[#EF4444]" />
-                </div>
-                <p className="text-2xl mb-1">8</p>
-                <p className="text-xs text-muted-foreground">Pending Complaints</p>
-              </div>
-            </motion.div>
+            </div>
 
-            {/* Attendance Trend */}
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center shrink-0">
+                <CheckCircle2 className="w-6 h-6 text-accent" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-1">Avg Attendance</p>
+                <p className="text-2xl font-bold tracking-tight">75%</p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#F59E0B]/10 flex items-center justify-center shrink-0">
+                <FileText className="w-6 h-6 text-[#F59E0B]" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-1">Active Events</p>
+                <p className="text-2xl font-bold tracking-tight">24</p>
+              </div>
+            </div>
+
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#EF4444]/10 flex items-center justify-center shrink-0">
+                <AlertCircle className="w-6 h-6 text-[#EF4444]" />
+              </div>
+              <div>
+                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider leading-none mb-1">Pending Tickets</p>
+                <p className="text-2xl font-bold tracking-tight">8</p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Core Analytics Grid Section */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+            {/* Attendance Track Profile (7/12 Workspace Width) */}
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
+              initial={{ y: 15, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
+              className="lg:col-span-7 bg-card border border-border rounded-xl p-6 shadow-sm"
             >
-              <h3 className="mb-4">Attendance Trend</h3>
-              <div className="bg-card border border-border rounded-3xl p-6">
-                <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={attendanceData}>
-                    <XAxis dataKey="month" stroke="#6B7280" />
-                    <YAxis stroke="#6B7280" />
+              <div className="mb-5">
+                <h3 className="text-base font-semibold tracking-tight">System Attendance Velocity</h3>
+                <p className="text-xs text-muted-foreground">Rolling institutional percentages over past semester intervals</p>
+              </div>
+              <div className="w-full pt-2">
+                <ResponsiveContainer width="100%" height={220}>
+                  <LineChart data={attendanceData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="month" stroke="var(--border)" fontSize={12} tickLine={false} axisLine={false} dy={8} />
+                    <YAxis stroke="var(--border)" fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'var(--card)',
                         border: '1px solid var(--border)',
-                        borderRadius: '12px',
+                        borderRadius: '8px',
                       }}
                     />
                     <Line
@@ -183,120 +172,121 @@ export function AdminDashboardScreen({ onBack }: AdminDashboardScreenProps) {
                       dataKey="percentage"
                       stroke="#335CFF"
                       strokeWidth={3}
-                      dot={{ fill: '#335CFF', r: 5 }}
+                      dot={{ fill: '#335CFF', r: 4, strokeWidth: 0 }}
+                      activeDot={{ r: 6 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
             </motion.div>
 
-            {/* Department Distribution */}
+            {/* Department Split Profile (5/12 Workspace Width) */}
             <motion.div
-              initial={{ y: 20, opacity: 0 }}
+              initial={{ y: 15, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.15 }}
+              className="lg:col-span-5 bg-card border border-border rounded-xl p-6 shadow-sm"
             >
-              <h3 className="mb-4">Students by Department</h3>
-              <div className="bg-card border border-border rounded-3xl p-6">
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={studentStats}>
-                    <XAxis dataKey="department" stroke="#6B7280" />
-                    <YAxis stroke="#6B7280" />
+              <div className="mb-5">
+                <h3 className="text-base font-semibold tracking-tight">Students by Branch</h3>
+                <p className="text-xs text-muted-foreground">Distribution across principal technical departments</p>
+              </div>
+              <div className="w-full pt-2">
+                <ResponsiveContainer width="100%" height={220}>
+                  <BarChart data={studentStats} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                    <XAxis dataKey="department" stroke="var(--border)" fontSize={12} tickLine={false} axisLine={false} dy={8} />
+                    <YAxis stroke="var(--border)" fontSize={12} tickLine={false} axisLine={false} />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: 'var(--card)',
                         border: '1px solid var(--border)',
-                        borderRadius: '12px',
+                        borderRadius: '8px',
                       }}
                     />
-                    <Bar dataKey="count" radius={[8, 8, 0, 0]} fill="#19E68C" />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]} fill="#19E68C" barSize={35} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             </motion.div>
+          </div>
 
-            {/* Recent Complaints */}
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3>Recent Complaints</h3>
-                <button
-                  onClick={() => setActiveTab('complaints')}
-                  className="text-sm text-primary"
+          {/* Bottom Dynamic Activity Stack */}
+          <motion.div
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="bg-card border border-border rounded-xl p-6 shadow-sm"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="text-base font-semibold tracking-tight">Pending Infrastructure Actions</h3>
+                <p className="text-xs text-muted-foreground">Most recent campus helpdesk entries awaiting administrative review</p>
+              </div>
+              <button
+                onClick={() => setActiveTab('complaints')}
+                className="text-xs font-semibold text-primary hover:underline border border-primary/20 bg-primary/5 px-3 py-1.5 rounded-lg transition-all"
+              >
+                View Operations Queue
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {recentComplaints.map((complaint) => (
+                <div
+                  key={complaint.id}
+                  className="bg-secondary/20 border border-border/50 rounded-xl p-4 flex items-center justify-between gap-4"
                 >
-                  View All
+                  <p className="text-sm font-medium tracking-tight truncate flex-1">{complaint.title}</p>
+                  <StatusChip status={complaint.status} />
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Sub-Panel Layout Content Shells */}
+      {activeTab === 'students' && (
+        <motion.div initial={{ y: 15, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <div className="bg-card border border-border rounded-xl p-8 max-w-3xl shadow-sm">
+            <h3 className="text-xl font-semibold mb-2">Student Management Suite</h3>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              Query global registries, configure dynamic credentials configurations, track historical session trends, or extract data arrays.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {['View All Students', 'Export Data', 'Add New Student', 'Generate Reports'].map((action, index) => (
+                <button
+                  key={index}
+                  className="bg-secondary/40 border border-border/50 hover:bg-secondary/80 text-left px-5 py-3.5 rounded-xl text-sm font-medium transition-all"
+                >
+                  {action}
                 </button>
-              </div>
-              <div className="space-y-3">
-                {recentComplaints.map((complaint) => (
-                  <div
-                    key={complaint.id}
-                    className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between"
-                  >
-                    <p>{complaint.title}</p>
-                    <StatusChip status={complaint.status} />
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          </>
-        )}
-
-        {activeTab === 'students' && (
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-          >
-            <div className="bg-card border border-border rounded-3xl p-6">
-              <h3 className="mb-4">Student Management</h3>
-              <p className="text-muted-foreground mb-6">
-                View and manage student records, attendance, and academic performance.
-              </p>
-              <div className="space-y-3">
-                {['View All Students', 'Export Data', 'Add New Student', 'Generate Reports'].map(
-                  (action, index) => (
-                    <button
-                      key={index}
-                      className="w-full bg-secondary/50 hover:bg-secondary text-left px-4 py-3 rounded-2xl transition-colors"
-                    >
-                      {action}
-                    </button>
-                  )
-                )}
-              </div>
+              ))}
             </div>
-          </motion.div>
-        )}
+          </div>
+        </motion.div>
+      )}
 
-        {activeTab === 'timetable' && (
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-          >
-            <div className="bg-card border border-border rounded-3xl p-6">
-              <h3 className="mb-4">Timetable Management</h3>
-              <p className="text-muted-foreground mb-6">
-                Create and manage class schedules for all departments and semesters.
-              </p>
-              <div className="space-y-3">
-                {['View All Timetables', 'Create New Schedule', 'Edit Existing', 'Export Schedule'].map(
-                  (action, index) => (
-                    <button
-                      key={index}
-                      className="w-full bg-secondary/50 hover:bg-secondary text-left px-4 py-3 rounded-2xl transition-colors"
-                    >
-                      {action}
-                    </button>
-                  )
-                )}
-              </div>
+      {activeTab === 'timetable' && (
+        <motion.div initial={{ y: 15, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
+          <div className="bg-card border border-border rounded-xl p-8 max-w-3xl shadow-sm">
+            <h3 className="text-xl font-semibold mb-2">Timetable Mapping Console</h3>
+            <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+              Design schedule slots, override conflicts, map course locations, and manage section divisions across engineering matrices.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {['View All Timetables', 'Create New Schedule', 'Edit Existing', 'Export Schedule'].map((action, index) => (
+                <button
+                  key={index}
+                  className="bg-secondary/40 border border-border/50 hover:bg-secondary/80 text-left px-5 py-3.5 rounded-xl text-sm font-medium transition-all"
+                >
+                  {action}
+                </button>
+              ))}
             </div>
-          </motion.div>
-        )}
-      </div>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
